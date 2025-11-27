@@ -1,0 +1,94 @@
+import { motion } from 'framer-motion';
+import { useAppSelector, useAppDispatch } from '@/app/hooks';
+import { selectTopic } from './topicSlice';
+import type { TopicSuggestion } from '@/types';
+import { truncateText } from '@/utils/helpers';
+
+export default function TopicList() {
+    const dispatch = useAppDispatch();
+    const suggestions = useAppSelector((state) => state.topics.suggestions);
+    const selectedTopic = useAppSelector((state) => state.topics.selectedTopic);
+
+    if (suggestions.length === 0) {
+        return null;
+    }
+
+    const handleSelectTopic = (topic: TopicSuggestion) => {
+        dispatch(selectTopic(topic));
+    };
+
+    return (
+        <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-gray-800">Topic Suggestions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {suggestions.map((topic, index) => (
+                    <motion.div
+                        key={topic.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className={`card cursor-pointer transition-all ${selectedTopic?.id === topic.id
+                                ? 'ring-2 ring-primary-500 bg-primary-50'
+                                : 'hover:shadow-xl'
+                            }`}
+                        onClick={() => handleSelectTopic(topic)}
+                    >
+                        {/* Topic Card Header */}
+                        <div className="flex items-start justify-between mb-3">
+                            <h3 className="text-lg font-semibold text-gray-800 flex-1">
+                                {truncateText(topic.title, 60)}
+                            </h3>
+                            {selectedTopic?.id === topic.id && (
+                                <svg
+                                    className="w-6 h-6 text-primary-600 flex-shrink-0"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fillRule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clipRule="evenodd"
+                                    />
+                                </svg>
+                            )}
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-3">{topic.description}</p>
+
+                        {/* Metadata */}
+                        <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center space-x-2">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {topic.tone}
+                                </span>
+                                <span className="text-gray-500">
+                                    ~{topic.estimatedWordCount.toLocaleString()} words
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Keywords */}
+                        {topic.keywords && topic.keywords.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-1">
+                                {topic.keywords.slice(0, 3).map((keyword, idx) => (
+                                    <span
+                                        key={idx}
+                                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800"
+                                    >
+                                        {keyword}
+                                    </span>
+                                ))}
+                                {topic.keywords.length > 3 && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-gray-600">
+                                        +{topic.keywords.length - 3} more
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                    </motion.div>
+                ))}
+            </div>
+        </div>
+    );
+}
