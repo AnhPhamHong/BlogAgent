@@ -20,6 +20,12 @@ public class AgentCoreDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Topic).IsRequired();
             entity.Property(e => e.State).HasConversion<string>();
+            
+            entity.Property(e => e.ChatHistory)
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                    v => System.Text.Json.JsonSerializer.Deserialize<List<ChatMessage>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<ChatMessage>()
+                );
         });
     }
 }

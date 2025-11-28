@@ -48,6 +48,19 @@ graph TB
     Tools --> TrendsAPI[Google Trends API]
 ```
 
+## API Contract (Workflow-Centric)
+
+The Agent Core exposes the following REST endpoints to drive the workflow. These endpoints map directly to MediatR commands.
+
+| Endpoint | Method | Command | Description |
+| :--- | :--- | :--- | :--- |
+| `/api/workflows` | POST | `StartWorkflowCommand` | Initiates a new blog generation workflow. |
+| `/api/workflows/{id}` | GET | `GetWorkflowQuery` | Retrieves the current state and data of a workflow. |
+| `/api/workflows/{id}/approve-outline` | POST | `ApproveOutlineCommand` | Transitions from `WaitingApproval` to `Drafting`. |
+| `/api/workflows/{id}/reject-outline` | POST | `RejectOutlineCommand` | Transitions from `WaitingApproval` to `Outlining` (retry). |
+| `/api/workflows/{id}/revise` | POST | `ReviseDraftCommand` | Requests revisions on the current draft. |
+| `/api/workflows/{id}/chat` | POST | `ChatCommand` | Processes a chat message within the workflow context. |
+
 ## Core Components
 
 ### 1. Orchestrator Service

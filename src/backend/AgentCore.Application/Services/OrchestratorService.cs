@@ -17,9 +17,9 @@ public class OrchestratorService : IOrchestratorService
         _repository = repository;
     }
 
-    public async Task<Guid> StartWorkflowAsync(string topic)
+    public async Task<Guid> StartWorkflowAsync(string topic, string? tone = null)
     {
-        var workflow = new Workflow(topic);
+        var workflow = new Workflow(topic, tone);
         await _repository.SaveAsync(workflow);
         
         // Start processing in background (fire and forget for now, or just return ID)
@@ -90,9 +90,88 @@ public class OrchestratorService : IOrchestratorService
         await _repository.SaveAsync(workflow);
     }
 
-    public async Task<string> GetStatusAsync(Guid workflowId)
+    public async Task<Workflow?> GetWorkflowAsync(Guid workflowId)
+    {
+        return await _repository.GetAsync(workflowId);
+    }
+
+    public async Task<bool> ApproveOutlineAsync(Guid workflowId, string? notes)
     {
         var workflow = await _repository.GetAsync(workflowId);
-        return workflow?.State.ToString() ?? "NotFound";
+        if (workflow == null || workflow.State != WorkflowState.WaitingApproval)
+            return false;
+
+        if (!string.IsNullOrEmpty(notes))
+        {
+            workflow.AddChatMessage("user", $"Outline approved with notes: {notes}");
+        }
+
+        workflow.TransitionTo(WorkflowState.Drafting);
+        await _repository.SaveAsync(workflow);
+
+        // Trigger background processing
+        _ = Task.Run(() => ProcessWorkflowAsync(workflowId));
+
+        return true;
+    }
+
+    public async Task<bool> RejectOutlineAsync(Guid workflowId, string feedback)
+    {
+        var workflow = await _repository.GetAsync(workflowId);
+        if (workflow == null || workflow.State != WorkflowState.WaitingApproval)
+            return false;
+
+        workflow.SetFeedback(feedback);
+        workflow.AddChatMessage("user", $"Outline rejected: {feedback}");
+        workflow.TransitionTo(WorkflowState.Outlining);
+        await _repository.SaveAsync(workflow);
+
+        // Trigger background processing to regenerate outline
+        _ = Task.Run(() => ProcessWorkflowAsync(workflowId));
+
+        return true;
+    }
+
+    public async Task<bool> ReviseDraftAsync(Guid workflowId, string instructions)
+    {
+        var workflow = await _repository.GetAsync(workflowId);
+        if (workflow == null)
+            return false;
+
+        workflow.SetFeedback(instructions);
+        workflow.AddChatMessage("user", $"Revision requested: {instructions}");
+        
+        // Process revision through mediator (could be a new command)
+        // For now, we'll transition back to Drafting state
+        if (workflow.State == WorkflowState.Editing || workflow.State == WorkflowState.Optimizing || workflow.State == WorkflowState.Final)
+        {
+            workflow.TransitionTo(WorkflowState.Drafting);
+        }
+
+        await _repository.SaveAsync(workflow);
+
+        // Trigger background processing
+        _ = Task.Run(() => ProcessWorkflowAsync(workflowId));
+
+        return true;
+    }
+
+    public async Task<string> ProcessChatMessageAsync(Guid workflowId, string message)
+    {
+        var workflow = await _repository.GetAsync(workflowId);
+        if (workflow == null)
+            throw new ArgumentException("Workflow not found", nameof(workflowId));
+
+        // Add user message to chat history
+        workflow.AddChatMessage("user", message);
+
+        // In a real implementation, this would call the AI agent with the workflow context
+        // For now, we'll return a simple response
+        var response = $"Received your message: '{message}'. This will be processed in the context of workflow {workflowId}.";
+        
+        workflow.AddChatMessage("assistant", response);
+        await _repository.SaveAsync(workflow);
+
+        return response;
     }
 }

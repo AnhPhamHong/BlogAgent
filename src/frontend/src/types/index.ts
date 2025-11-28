@@ -10,27 +10,58 @@ export interface TopicSuggestion {
 
 export type ToneType = 'professional' | 'casual' | 'witty' | 'persuasive';
 
-// Draft related types
-export interface Draft {
+// Workflow related types
+export interface Workflow {
     id: string;
     topicId: string;
-    outline: Section[];
-    content: string;
-    metaTitle: string;
-    metaDescription: string;
-    seoScore: number;
-    status: DraftStatus;
+    state: WorkflowState;
+    currentStep: string; // Human readable status
+    data: {
+        research?: ResearchData;
+        outline?: Section[];
+        draft?: Draft;
+    };
     createdAt: string;
     updatedAt: string;
 }
 
-export type DraftStatus = 'outline' | 'draft' | 'review' | 'final';
+export type WorkflowState = 'Researching' | 'Outlining' | 'WaitingApproval' | 'Drafting' | 'Review' | 'Optimizing' | 'Completed';
+
+export interface ResearchData {
+    // Define structure based on what backend returns, for now generic
+    [key: string]: any;
+}
+
+// Draft related types
+export interface Draft {
+    id: string;
+    workflowId: string;
+    content: string;
+    metaTitle: string;
+    metaDescription: string;
+    seoScore: number;
+    lastUpdated: string;
+}
 
 export interface Section {
     id: string;
     heading: string;
     subheadings: string[];
     order: number;
+}
+
+// User Settings
+export interface UserSettings {
+    defaultTone: string;
+    apiKey: string;
+    cmsIntegrations: CMSIntegration[];
+}
+
+export interface CMSIntegration {
+    platform: 'wordpress' | 'medium' | 'ghost';
+    siteUrl: string;
+    credentials: Record<string, string>;
+    autoPublish: boolean;
 }
 
 // API request/response types
@@ -44,20 +75,31 @@ export interface GenerateTopicsResponse {
     topics: TopicSuggestion[];
 }
 
-export interface GenerateOutlineRequest {
+export interface CreateWorkflowRequest {
     topicId: string;
 }
 
-export interface GenerateDraftRequest {
-    topicId: string;
-    outlineId?: string;
+export interface ApproveOutlineRequest {
+    workflowId: string;
+    outline: Section[];
 }
 
-// Workflow state (from backend)
-export interface WorkflowState {
-    id: string;
-    state: 'initial' | 'research' | 'outline' | 'draft' | 'review' | 'optimize' | 'complete';
-    currentStep: string;
-    progress: number;
-    estimatedTimeRemaining?: number;
+export interface RejectOutlineRequest {
+    workflowId: string;
+    reason?: string;
+}
+
+export interface ReviseDraftRequest {
+    workflowId: string;
+    instructions: string;
+}
+
+export interface ChatRequest {
+    workflowId: string;
+    message: string;
+}
+
+export interface PublishRequest {
+    workflowId: string;
+    platform: string;
 }

@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { selectTopic } from './topicSlice';
+import { useCreateWorkflowMutation } from '@/services/api';
+import { setCurrentWorkflow, setCreating, setError } from '@/features/workflows/workflowSlice';
 import type { TopicSuggestion } from '@/types';
 import { truncateText } from '@/utils/helpers';
 
@@ -8,6 +10,10 @@ export default function TopicList() {
     const dispatch = useAppDispatch();
     const suggestions = useAppSelector((state) => state.topics.suggestions);
     const selectedTopic = useAppSelector((state) => state.topics.selectedTopic);
+    const currentWorkflow = useAppSelector((state) => state.workflow.currentWorkflow);
+    const isCreating = useAppSelector((state) => state.workflow.isCreating);
+
+    const [createWorkflow] = useCreateWorkflowMutation();
 
     if (suggestions.length === 0) {
         return null;
@@ -17,9 +23,38 @@ export default function TopicList() {
         dispatch(selectTopic(topic));
     };
 
+    const handleStartGeneration = async () => {
+        if (!selectedTopic) return;
+
+        try {
+            dispatch(setCreating(true));
+            dispatch(setError(null));
+
+            const workflow = await createWorkflow({ topicId: selectedTopic.id }).unwrap();
+            dispatch(setCurrentWorkflow(workflow));
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to create workflow';
+            dispatch(setError(errorMessage));
+            console.error('Failed to create workflow:', err);
+        } finally {
+            dispatch(setCreating(false));
+        }
+    };
+
     return (
         <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-gray-800">Topic Suggestions</h2>
+            <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-800">Topic Suggestions</h2>
+                {selectedTopic && !currentWorkflow && (
+                    <button
+                        onClick={handleStartGeneration}
+                        disabled={isCreating}
+                        className="btn btn-primary"
+                    >
+                        {isCreating ? 'Starting...' : 'Start Generation'}
+                    </button>
+                )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {suggestions.map((topic, index) => (
                     <motion.div
@@ -28,8 +63,8 @@ export default function TopicList() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
                         className={`card cursor-pointer transition-all ${selectedTopic?.id === topic.id
-                                ? 'ring-2 ring-primary-500 bg-primary-50'
-                                : 'hover:shadow-xl'
+                            ? 'ring-2 ring-primary-500 bg-primary-50'
+                            : 'hover:shadow-xl'
                             }`}
                         onClick={() => handleSelectTopic(topic)}
                     >

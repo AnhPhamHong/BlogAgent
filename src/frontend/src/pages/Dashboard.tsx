@@ -4,6 +4,7 @@ import { setCurrentView } from '@/features/ui/uiSlice';
 import TopicInputForm from '@/features/topics/TopicInputForm';
 import TopicList from '@/features/topics/TopicList';
 import ProgressIndicator from '@/components/ProgressIndicator';
+import WorkflowViewer from '@/features/workflows/WorkflowViewer';
 
 export default function Dashboard() {
     const dispatch = useAppDispatch();
@@ -24,6 +25,9 @@ export default function Dashboard() {
 
             {/* Progress Indicator */}
             <ProgressIndicator />
+
+            {/* Workflow Viewer */}
+            <WorkflowViewer />
 
             {/* Topic Input Form */}
             <TopicInputForm />

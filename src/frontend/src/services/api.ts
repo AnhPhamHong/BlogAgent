@@ -2,9 +2,13 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type {
     GenerateTopicsRequest,
     GenerateTopicsResponse,
-    Draft,
-    GenerateOutlineRequest,
-    GenerateDraftRequest,
+    Workflow,
+    CreateWorkflowRequest,
+    ApproveOutlineRequest,
+    RejectOutlineRequest,
+    ReviseDraftRequest,
+    ChatRequest,
+    PublishRequest,
 } from '@/types';
 
 export const blogAgentApi = createApi({
@@ -16,7 +20,7 @@ export const blogAgentApi = createApi({
             return headers;
         },
     }),
-    tagTypes: ['Topics', 'Drafts', 'Workflow'],
+    tagTypes: ['Topics', 'Workflow'],
     endpoints: (builder) => ({
         // Generate topic ideas
         generateTopics: builder.mutation<GenerateTopicsResponse, GenerateTopicsRequest>({
@@ -28,37 +32,80 @@ export const blogAgentApi = createApi({
             invalidatesTags: ['Topics'],
         }),
 
-        // Generate outline for a topic
-        generateOutline: builder.mutation<Draft, GenerateOutlineRequest>({
+        // Create a new workflow
+        createWorkflow: builder.mutation<Workflow, CreateWorkflowRequest>({
             query: (request) => ({
-                url: '/drafts/outline',
+                url: '/workflows',
                 method: 'POST',
                 body: request,
             }),
-            invalidatesTags: ['Drafts'],
+            invalidatesTags: ['Workflow'],
         }),
 
-        // Generate full draft
-        generateDraft: builder.mutation<Draft, GenerateDraftRequest>({
-            query: (request) => ({
-                url: '/drafts/generate',
+        // Get workflow state
+        getWorkflow: builder.query<Workflow, string>({
+            query: (id) => `/workflows/${id}`,
+            providesTags: (_result, _error, id) => [{ type: 'Workflow', id }],
+        }),
+
+        // Approve outline
+        approveOutline: builder.mutation<Workflow, ApproveOutlineRequest>({
+            query: ({ workflowId, ...body }) => ({
+                url: `/workflows/${workflowId}/approve-outline`,
                 method: 'POST',
-                body: request,
+                body,
             }),
-            invalidatesTags: ['Drafts'],
+            invalidatesTags: (_result, _error, { workflowId }) => [{ type: 'Workflow', id: workflowId }],
         }),
 
-        // Get draft by ID
-        getDraft: builder.query<Draft, string>({
-            query: (id) => `/drafts/${id}`,
-            providesTags: (_result, _error, id) => [{ type: 'Drafts', id }],
+        // Reject outline
+        rejectOutline: builder.mutation<Workflow, RejectOutlineRequest>({
+            query: ({ workflowId, ...body }) => ({
+                url: `/workflows/${workflowId}/reject-outline`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: (_result, _error, { workflowId }) => [{ type: 'Workflow', id: workflowId }],
+        }),
+
+        // Revise draft
+        reviseDraft: builder.mutation<Workflow, ReviseDraftRequest>({
+            query: ({ workflowId, ...body }) => ({
+                url: `/workflows/${workflowId}/revise`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: (_result, _error, { workflowId }) => [{ type: 'Workflow', id: workflowId }],
+        }),
+
+        // Chat with agent
+        chatWithAgent: builder.mutation<void, ChatRequest>({
+            query: ({ workflowId, ...body }) => ({
+                url: `/workflows/${workflowId}/chat`,
+                method: 'POST',
+                body,
+            }),
+        }),
+
+        // Publish to CMS
+        publishToCMS: builder.mutation<void, PublishRequest>({
+            query: ({ platform, ...body }) => ({
+                url: `/publish/${platform}`,
+                method: 'POST',
+                body,
+            }),
         }),
     }),
 });
 
+// TODO: What are mutations btw?
 export const {
     useGenerateTopicsMutation,
-    useGenerateOutlineMutation,
-    useGenerateDraftMutation,
-    useGetDraftQuery,
+    useCreateWorkflowMutation,
+    useGetWorkflowQuery,
+    useApproveOutlineMutation,
+    useRejectOutlineMutation,
+    useReviseDraftMutation,
+    useChatWithAgentMutation,
+    usePublishToCMSMutation,
 } = blogAgentApi;
