@@ -14,3 +14,6 @@ public record ApproveOutlineCommand(Guid WorkflowId, string? Notes) : IRequest<b
 public record RejectOutlineCommand(Guid WorkflowId, string Feedback) : IRequest<bool>;
 public record ReviseDraftCommand(Guid WorkflowId, string Instructions) : IRequest<bool>;
 public record ChatCommand(Guid WorkflowId, string Message) : IRequest<string>;
+
+// Topic Generation Commands
+public record GenerateTopicsCommand(string Keywords, string Tone, int? TargetWordCount) : IRequest<List<AgentCore.Application.DTOs.TopicSuggestionDto>>;

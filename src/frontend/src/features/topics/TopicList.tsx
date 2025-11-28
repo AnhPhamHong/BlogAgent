@@ -30,7 +30,10 @@ export default function TopicList() {
             dispatch(setCreating(true));
             dispatch(setError(null));
 
-            const workflow = await createWorkflow({ topicId: selectedTopic.id }).unwrap();
+            const workflow = await createWorkflow({
+                topic: selectedTopic.title,
+                tone: selectedTopic.tone
+            }).unwrap();
             dispatch(setCurrentWorkflow(workflow));
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to create workflow';
@@ -101,6 +104,19 @@ export default function TopicList() {
                                     ~{topic.estimatedWordCount.toLocaleString()} words
                                 </span>
                             </div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    // TODO: Implement regeneration logic
+                                    console.log('Regenerate topic:', topic.id);
+                                }}
+                                className="text-gray-400 hover:text-primary-600 transition-colors"
+                                title="Regenerate Topic"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
                         </div>
 
                         {/* Keywords */}

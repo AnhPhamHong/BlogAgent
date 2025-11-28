@@ -76,7 +76,8 @@ export interface GenerateTopicsResponse {
 }
 
 export interface CreateWorkflowRequest {
-    topicId: string;
+    topic: string;
+    tone?: string;
 }
 
 export interface ApproveOutlineRequest {

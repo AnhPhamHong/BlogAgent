@@ -79,48 +79,64 @@ export default function WorkflowViewer() {
                     </div>
                 </div>
 
-                {/* Data Sections */}
-                {workflow.data.outline && workflow.data.outline.length > 0 && (
-                    <div>
-                        <p className="text-sm text-gray-600 mb-2">Outline</p>
-                        <div className="space-y-2">
-                            {workflow.data.outline.map((section) => (
-                                <div key={section.id} className="border-l-2 border-primary-500 pl-3">
-                                    <p className="font-medium text-gray-800">{section.heading}</p>
-                                    {section.subheadings.length > 0 && (
-                                        <ul className="list-disc list-inside text-sm text-gray-600 ml-2">
-                                            {section.subheadings.map((subheading, idx) => (
-                                                <li key={idx}>{subheading}</li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                            ))}
+                {/* Data Sections - Split View */}
+                <div className={`grid gap-6 ${workflow.data.outline && workflow.data.draft ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
+                    {/* Outline Section */}
+                    {workflow.data.outline && workflow.data.outline.length > 0 && (
+                        <div className="bg-white rounded-lg border border-gray-200 p-4">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Outline</h4>
+                            <div className="space-y-3">
+                                {workflow.data.outline.map((section) => (
+                                    <div key={section.id} className="border-l-2 border-primary-500 pl-3">
+                                        <p className="font-medium text-gray-800">{section.heading}</p>
+                                        {section.subheadings.length > 0 && (
+                                            <ul className="list-disc list-inside text-sm text-gray-600 ml-2 mt-1">
+                                                {section.subheadings.map((subheading, idx) => (
+                                                    <li key={idx}>{subheading}</li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {workflow.data.draft && (
-                    <div>
-                        <p className="text-sm text-gray-600 mb-2">Draft Preview</p>
-                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <h4 className="font-semibold mb-2">{workflow.data.draft.metaTitle}</h4>
-                            <p className="text-sm text-gray-600 mb-2">{workflow.data.draft.metaDescription}</p>
-                            <div className="text-sm text-gray-700 line-clamp-6">
-                                {workflow.data.draft.content.substring(0, 300)}...
-                            </div>
-                            <div className="mt-2 flex items-center space-x-2">
-                                <span className="text-xs text-gray-600">SEO Score:</span>
-                                <span className={`text-xs font-medium ${workflow.data.draft.seoScore >= 80 ? 'text-green-600' :
-                                    workflow.data.draft.seoScore >= 60 ? 'text-yellow-600' :
-                                        'text-red-600'
-                                    }`}>
-                                    {workflow.data.draft.seoScore}/100
-                                </span>
+                    {/* Draft Section */}
+                    {workflow.data.draft && (
+                        <div className="bg-white rounded-lg border border-gray-200 p-4">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Draft Preview</h4>
+                            <div className="space-y-4">
+                                <div className="border-b border-gray-100 pb-3">
+                                    <h5 className="font-semibold text-lg text-gray-900">{workflow.data.draft.metaTitle}</h5>
+                                    <p className="text-sm text-gray-500 mt-1">{workflow.data.draft.metaDescription}</p>
+                                </div>
+
+                                <div className="prose prose-sm max-w-none text-gray-700">
+                                    {/* Simple rendering for now, would use a rich text viewer in real app */}
+                                    {workflow.data.draft.content.split('\n').map((paragraph, idx) => (
+                                        paragraph.trim() && <p key={idx} className="mb-2">{paragraph}</p>
+                                    ))}
+                                </div>
+
+                                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-xs text-gray-500">SEO Score:</span>
+                                        <span className={`text-sm font-bold ${workflow.data.draft.seoScore >= 80 ? 'text-green-600' :
+                                            workflow.data.draft.seoScore >= 60 ? 'text-yellow-600' :
+                                                'text-red-600'
+                                            }`}>
+                                            {workflow.data.draft.seoScore}/100
+                                        </span>
+                                    </div>
+                                    <span className="text-xs text-gray-400">
+                                        Last updated: {new Date(workflow.data.draft.lastUpdated).toLocaleTimeString()}
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );
