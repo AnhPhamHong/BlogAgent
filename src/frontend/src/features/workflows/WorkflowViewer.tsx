@@ -105,6 +105,17 @@ export default function WorkflowViewer() {
                     </div>
                 )}
 
+                {/* Outlining State Display */}
+                {workflow.state === 'Outlining' && (
+                    <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                        <LoadingSpinner size="lg" className="mb-4 text-purple-500" />
+                        <h4 className="text-lg font-medium text-gray-800">Generating Outline...</h4>
+                        <p className="text-gray-500 mt-2 text-center max-w-md">
+                            Structuring your blog post based on the research findings.
+                        </p>
+                    </div>
+                )}
+
                 {/* Data Sections - Split View */}
                 <div className={`grid gap-6 ${workflow.data.outline && workflow.data.draft ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
                     {/* Research Section */}
