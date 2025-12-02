@@ -19,6 +19,12 @@ export default function TopicList() {
         return null;
     }
 
+    // Hide topic list after workflow is created
+    if (currentWorkflow) {
+        return null;
+    }
+
+
     const handleSelectTopic = (topic: TopicSuggestion) => {
         dispatch(selectTopic(topic));
     };

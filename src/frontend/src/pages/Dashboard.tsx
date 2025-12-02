@@ -34,13 +34,6 @@ export default function Dashboard() {
 
             {/* Topic Suggestions List */}
             <TopicList />
-
-            {/* Call to Action - shown when topic is selected */}
-            <div className="text-center py-8">
-                <p className="text-gray-500 text-sm">
-                    Select a topic above to start generating your blog content
-                </p>
-            </div>
         </div>
     );
 }
