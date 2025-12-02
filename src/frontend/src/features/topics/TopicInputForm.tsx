@@ -1,10 +1,12 @@
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { topicInputSchema, type TopicInputFormData } from '@/utils/validation';
 import { useGenerateTopicsMutation } from '@/services/api';
-import { useAppDispatch } from '@/app/hooks';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { setTopicSuggestions } from './topicSlice';
+import CollapsibleSection from '@/components/ui/CollapsibleSection';
 
 const TONE_OPTIONS = [
     { value: 'professional', label: 'Professional' },
@@ -16,6 +18,11 @@ const TONE_OPTIONS = [
 export default function TopicInputForm() {
     const dispatch = useAppDispatch();
     const [generateTopics, { isLoading }] = useGenerateTopicsMutation();
+    const currentWorkflow = useAppSelector((state) => state.workflow.currentWorkflow);
+    const selectedTopic = useAppSelector((state) => state.topics.selectedTopic);
+
+    // Control collapsible state - open by default, closed when workflow is created
+    const [isOpen, setIsOpen] = useState(true);
 
     const {
         register,
@@ -42,9 +49,42 @@ export default function TopicInputForm() {
         }
     };
 
+    // Determine if form should be disabled (workflow exists)
+    const isDisabled = !!currentWorkflow;
+
+    // Close the section automatically when workflow is created
+    useEffect(() => {
+        if (currentWorkflow && isOpen) {
+            setIsOpen(false);
+        }
+    }, [currentWorkflow]);
+
+    // Determine status for CollapsibleSection
+    const getStatus = () => {
+        if (currentWorkflow) return 'completed';
+        if (isLoading) return 'active';
+        return 'pending';
+    };
+
     return (
-        <div className="card">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Generate Blog Topics</h2>
+        <CollapsibleSection
+            title="Generate Blog Topics"
+            status={getStatus()}
+            isOpen={isOpen}
+            onToggle={() => setIsOpen(!isOpen)}
+        >
+            {/* Show chosen topic when workflow exists */}
+            {currentWorkflow && selectedTopic && (
+                <div className="p-3 bg-blue-50 border border-blue-100 rounded-md mb-4">
+                    <p className="text-sm font-medium text-blue-900">
+                        <span className="text-blue-600">Chosen Topic: </span>
+                        {selectedTopic.title}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                        Tone: {selectedTopic.tone}
+                    </p>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* Keywords Input */}
@@ -56,7 +96,8 @@ export default function TopicInputForm() {
                         id="keywords"
                         {...register('keywords')}
                         rows={3}
-                        className="input-field resize-none"
+                        disabled={isDisabled}
+                        className={`input-field resize-none ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                         placeholder="Enter keywords or a topic you want to write about..."
                     />
                     <div className="flex justify-between items-center mt-2">
@@ -74,7 +115,12 @@ export default function TopicInputForm() {
                     <label htmlFor="tone" className="block text-sm font-medium text-gray-700 mb-2">
                         Tone
                     </label>
-                    <select id="tone" {...register('tone')} className="input-field">
+                    <select
+                        id="tone"
+                        {...register('tone')}
+                        disabled={isDisabled}
+                        className={`input-field ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                    >
                         {TONE_OPTIONS.map((option) => (
                             <option key={option.value} value={option.value}>
                                 {option.label}
@@ -85,7 +131,11 @@ export default function TopicInputForm() {
                 </div>
 
                 {/* Submit Button */}
-                <button type="submit" disabled={isLoading} className="btn-primary w-full">
+                <button
+                    type="submit"
+                    disabled={isLoading || isDisabled}
+                    className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                     {isLoading ? (
                         <span className="flex items-center justify-center">
                             <svg
@@ -111,10 +161,10 @@ export default function TopicInputForm() {
                             Generating Ideas...
                         </span>
                     ) : (
-                        'Generate Ideas'
+                        isDisabled ? 'Topic Selected' : 'Generate Ideas'
                     )}
                 </button>
             </form>
-        </div>
+        </CollapsibleSection>
     );
 }

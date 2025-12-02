@@ -64,7 +64,7 @@ export default function OutlineEditor({ workflowId, initialOutline, isReadOnly =
             <textarea
                 value={outline}
                 onChange={(e) => setOutline(e.target.value)}
-                className="w-full h-96 p-4 border border-gray-300 rounded-md font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full h-96 p-4 border border-gray-300 rounded-md font-mono text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="# Introduction..."
             />
 
@@ -76,7 +76,7 @@ export default function OutlineEditor({ workflowId, initialOutline, isReadOnly =
                     <textarea
                         value={feedback}
                         onChange={(e) => setFeedback(e.target.value)}
-                        className="w-full h-24 p-2 border border-red-200 rounded-md text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        className="w-full h-24 p-2 border border-red-200 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         placeholder="e.g., The outline is missing a section on..."
                     />
                     <div className="mt-3 flex space-x-3">
@@ -108,7 +108,7 @@ export default function OutlineEditor({ workflowId, initialOutline, isReadOnly =
                         disabled={isApproving}
                         className="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 shadow-sm"
                     >
-                        {isApproving ? 'Approving...' : 'Approve Outline'}
+                        {isApproving ? 'Approving...' : 'tas'}
                     </button>
                 </div>
             )}

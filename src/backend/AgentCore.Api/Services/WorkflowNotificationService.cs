@@ -28,7 +28,8 @@ public class WorkflowNotificationService : IWorkflowNotificationService
 
             await _hubContext.Clients.Group(groupName).SendAsync("WorkflowUpdated", workflowDto);
 
-            _logger.LogInformation("Notified workflow group {GroupName} of update", groupName);
+            _logger.LogInformation("Notified workflow group {GroupName} of update. State: {State}, Outline Length: {OutlineLength}", 
+                groupName, workflowDto.State, workflowDto.Data.Outline?.Length ?? -1);
         }
         catch (Exception ex)
         {

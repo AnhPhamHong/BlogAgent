@@ -1,31 +1,62 @@
+import { useState, useEffect } from 'react';
 import { useAppSelector } from '@/app/hooks';
 import { useGetWorkflowQuery } from '@/services/api';
 import { useWorkflowSubscription } from '@/hooks/useWorkflowSubscription';
 import OutlineEditor from './OutlineEditor';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ReactMarkdown from 'react-markdown';
+import CollapsibleSection from '@/components/ui/CollapsibleSection';
 
 export default function WorkflowViewer() {
     const currentWorkflow = useAppSelector((state) => state.workflow.currentWorkflow);
 
-    // Subscribe to real-time updates via SignalR (no more polling!)
+    // Subscribe to real-time updates via SignalR
     useWorkflowSubscription(currentWorkflow?.id);
 
-    // Initial fetch only (no polling)
+    // Initial fetch only
     const { data: initialWorkflow } = useGetWorkflowQuery(
         currentWorkflow?.id || '',
         {
             skip: !currentWorkflow?.id,
-            // No pollingInterval - using SignalR instead!
         }
     );
 
-    // Use the current workflow from Redux (updated via SignalR) or initial fetch
     const workflow = currentWorkflow || initialWorkflow;
+
+    // State for collapsible sections
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+        draft: false,
+        outline: false,
+        research: false,
+    });
+
+    // Automatically expand the current active stage
+    useEffect(() => {
+        if (!workflow) return;
+
+        const newExpanded = { ...expandedSections };
+
+        if (['Drafting', 'Review', 'Optimizing', 'Completed'].includes(workflow.state)) {
+            newExpanded.draft = true;
+        } else if (['Outlining', 'WaitingApproval'].includes(workflow.state)) {
+            newExpanded.outline = true;
+        } else if (workflow.state === 'Researching') {
+            newExpanded.research = true;
+        }
+
+        setExpandedSections(newExpanded);
+    }, [workflow?.state]);
 
     if (!workflow) {
         return null;
     }
+
+    const toggleSection = (section: string) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [section]: !prev[section]
+        }));
+    };
 
     const getStateColor = (state: string) => {
         switch (state) {
@@ -47,17 +78,57 @@ export default function WorkflowViewer() {
         }
     };
 
-    return (
-        <div className="card">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold text-gray-800">Workflow Progress</h3>
-                <span className={`px-3 py-1 rounded-full text-white text-sm font-medium ${getStateColor(workflow.state)}`}>
-                    {workflow.state}
-                </span>
-            </div>
+    // Determine status for each section
+    const getResearchStatus = () => {
+        if (workflow.state === 'Researching') return 'active';
+        if (workflow.data.research) return 'completed';
+        return 'pending';
+    };
 
-            <div className="space-y-4">
-                {/* Current Step */}
+    const getOutlineStatus = () => {
+        if (workflow.state === 'Outlining' || workflow.state === 'WaitingApproval') return 'active';
+        if (workflow.data.outline && ['Drafting', 'Review', 'Optimizing', 'Completed'].includes(workflow.state)) return 'completed';
+        return 'pending';
+    };
+
+    const getDraftStatus = () => {
+        if (['Drafting', 'Review', 'Optimizing'].includes(workflow.state)) return 'active';
+        if (workflow.state === 'Completed') return 'completed';
+        return 'pending';
+    };
+
+    const getProgress = (state: string) => {
+        switch (state) {
+            case 'Researching': return 25;
+            case 'Outlining': return 50;
+            case 'WaitingApproval': return 50;
+            case 'Drafting': return 75;
+            case 'Review': return 85;
+            case 'Optimizing': return 95;
+            case 'Completed': return 100;
+            default: return 0;
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="card">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold text-gray-800">Workflow Progress</h3>
+                    <span className={`px-3 py-1 rounded-full text-white text-sm font-medium ${getStateColor(workflow.state)}`}>
+                        {workflow.state}
+                    </span>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                    <div
+                        className={`h-2.5 rounded-full transition-all duration-500 ${getStateColor(workflow.state)}`}
+                        style={{ width: `${getProgress(workflow.state)}%` }}
+                    ></div>
+                </div>
+
+                {/* Current Step & Error Display */}
                 <div>
                     <p className="text-sm text-gray-600 mb-1">Current Step</p>
                     <p className="text-base font-medium text-gray-800">{workflow.currentStep}</p>
@@ -67,86 +138,18 @@ export default function WorkflowViewer() {
                         </div>
                     )}
                 </div>
+            </div>
 
-                {/* Progress Timeline */}
-                <div className="space-y-2">
-                    <p className="text-sm text-gray-600 mb-2">Timeline</p>
-                    <div className="flex items-center space-x-2">
-                        {['Researching', 'Outlining', 'WaitingApproval', 'Drafting', 'Review', 'Completed'].map((step) => {
-                            const stateIndex = ['Researching', 'Outlining', 'WaitingApproval', 'Drafting', 'Review', 'Optimizing', 'Completed'].indexOf(workflow.state);
-                            const currentIndex = ['Researching', 'Outlining', 'WaitingApproval', 'Drafting', 'Review', 'Optimizing', 'Completed'].indexOf(step);
-                            const isActive = currentIndex === stateIndex;
-                            const isCompleted = currentIndex < stateIndex;
-
-                            return (
-                                <div key={step} className="flex-1">
-                                    <div className={`h-2 rounded-full ${isCompleted ? 'bg-green-500' :
-                                        isActive ? 'bg-blue-500' :
-                                            'bg-gray-200'
-                                        }`} />
-                                    <p className={`text-xs mt-1 ${isActive || isCompleted ? 'text-gray-800 font-medium' : 'text-gray-500'
-                                        }`}>
-                                        {step.replace(/([A-Z])/g, ' $1').trim()}
-                                    </p>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Researching State Display */}
-                {workflow.state === 'Researching' && (
-                    <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                        <LoadingSpinner size="lg" className="mb-4 text-blue-500" />
-                        <h4 className="text-lg font-medium text-gray-800">Researching Topic...</h4>
-                        <p className="text-gray-500 mt-2 text-center max-w-md">
-                            The agent is currently analyzing your topic, gathering relevant information, and preparing a comprehensive outline.
-                        </p>
-                    </div>
-                )}
-
-                {/* Outlining State Display */}
-                {workflow.state === 'Outlining' && (
-                    <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                        <LoadingSpinner size="lg" className="mb-4 text-purple-500" />
-                        <h4 className="text-lg font-medium text-gray-800">Generating Outline...</h4>
-                        <p className="text-gray-500 mt-2 text-center max-w-md">
-                            Structuring your blog post based on the research findings.
-                        </p>
-                    </div>
-                )}
-
-                {/* Data Sections - Split View */}
-                <div className={`grid gap-6 ${workflow.data.research && (workflow.data.outline || workflow.data.draft) ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
-                    {/* Research Section */}
-                    {workflow.data.research && (
-                        <div className="bg-white rounded-lg border border-gray-200 p-4">
-                            <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Research Findings</h4>
-                            <div className="prose prose-sm max-w-none text-gray-700 max-h-96 overflow-y-auto">
-                                {typeof workflow.data.research === 'string' ? (
-                                    <ReactMarkdown>{workflow.data.research}</ReactMarkdown>
-                                ) : (
-                                    <pre>{JSON.stringify(workflow.data.research, null, 2)}</pre>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Outline Section */}
-                    {workflow.data.outline && !workflow.data.draft && (
-                        <div>
-                            <OutlineEditor
-                                workflowId={workflow.id}
-                                initialOutline={workflow.data.outline}
-                                isReadOnly={workflow.state !== 'WaitingApproval'}
-                            />
-                        </div>
-                    )}
-
-                    {/* Draft Section */}
-                    {workflow.data.draft && (
-                        <div className="bg-white rounded-lg border border-gray-200 p-4">
-                            <h4 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Draft Preview</h4>
+            <div className="space-y-4">
+                {/* 1. Draft Section (Top Priority) */}
+                {(workflow.data.draft || ['Drafting', 'Review', 'Optimizing', 'Completed'].includes(workflow.state)) && (
+                    <CollapsibleSection
+                        title="Draft Generation"
+                        status={getDraftStatus()}
+                        isOpen={expandedSections.draft}
+                        onToggle={() => toggleSection('draft')}
+                    >
+                        {workflow.data.draft ? (
                             <div className="space-y-4">
                                 <div className="border-b border-gray-100 pb-3">
                                     <h5 className="font-semibold text-lg text-gray-900">{workflow.data.draft.metaTitle}</h5>
@@ -154,10 +157,7 @@ export default function WorkflowViewer() {
                                 </div>
 
                                 <div className="prose prose-sm max-w-none text-gray-700">
-                                    {/* Simple rendering for now, would use a rich text viewer in real app */}
-                                    {workflow.data.draft.content.split('\n').map((paragraph, idx) => (
-                                        paragraph.trim() && <p key={idx} className="mb-2">{paragraph}</p>
-                                    ))}
+                                    <ReactMarkdown>{workflow.data.draft.content}</ReactMarkdown>
                                 </div>
 
                                 <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
@@ -175,9 +175,62 @@ export default function WorkflowViewer() {
                                     </span>
                                 </div>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-8">
+                                <LoadingSpinner size="lg" className="mb-4 text-blue-500" />
+                                <p className="text-gray-500">Generating draft content...</p>
+                            </div>
+                        )}
+                    </CollapsibleSection>
+                )}
+
+                {/* 2. Outline Section */}
+                {(workflow.data.outline || ['Outlining', 'WaitingApproval'].includes(workflow.state) || getOutlineStatus() === 'completed') && (
+                    <CollapsibleSection
+                        title="Outline"
+                        status={getOutlineStatus()}
+                        isOpen={expandedSections.outline}
+                        onToggle={() => toggleSection('outline')}
+                    >
+                        {workflow.data.outline ? (
+                            <OutlineEditor
+                                workflowId={workflow.id}
+                                initialOutline={workflow.data.outline}
+                                isReadOnly={workflow.state !== 'WaitingApproval'}
+                            />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-8">
+                                <LoadingSpinner size="lg" className="mb-4 text-purple-500" />
+                                <p className="text-gray-500">Generating outline structure...</p>
+                            </div>
+                        )}
+                    </CollapsibleSection>
+                )}
+
+                {/* 3. Research Section (Bottom Priority) */}
+                {(workflow.data.research || workflow.state === 'Researching' || getResearchStatus() === 'completed') && (
+                    <CollapsibleSection
+                        title="Research Findings"
+                        status={getResearchStatus()}
+                        isOpen={expandedSections.research}
+                        onToggle={() => toggleSection('research')}
+                    >
+                        {workflow.data.research ? (
+                            <div className="prose prose-sm max-w-none text-gray-700 max-h-96 overflow-y-auto">
+                                {typeof workflow.data.research === 'string' ? (
+                                    <ReactMarkdown>{workflow.data.research}</ReactMarkdown>
+                                ) : (
+                                    <pre>{JSON.stringify(workflow.data.research, null, 2)}</pre>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-8">
+                                <LoadingSpinner size="lg" className="mb-4 text-blue-500" />
+                                <p className="text-gray-500">Gathering research data...</p>
+                            </div>
+                        )}
+                    </CollapsibleSection>
+                )}
             </div>
         </div>
     );
