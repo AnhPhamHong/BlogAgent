@@ -25,7 +25,7 @@ export interface Workflow {
     updatedAt: string;
 }
 
-export type WorkflowState = 'Researching' | 'Outlining' | 'WaitingApproval' | 'Drafting' | 'Review' | 'Optimizing' | 'Completed' | 'Failed';
+export type WorkflowState = 'Idle' | 'Researching' | 'Outlining' | 'WaitingApproval' | 'Drafting' | 'Review' | 'Editing' | 'Optimizing' | 'Final' | 'Failed';
 
 export interface ResearchData {
     // Define structure based on what backend returns, for now generic

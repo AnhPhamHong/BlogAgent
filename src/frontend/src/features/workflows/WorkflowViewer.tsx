@@ -36,7 +36,7 @@ export default function WorkflowViewer() {
 
         const newExpanded = { ...expandedSections };
 
-        if (['Drafting', 'Review', 'Optimizing', 'Completed'].includes(workflow.state)) {
+        if (['Drafting', 'Review', 'Editing', 'Optimizing', 'Final'].includes(workflow.state)) {
             newExpanded.draft = true;
         } else if (['Outlining', 'WaitingApproval'].includes(workflow.state)) {
             newExpanded.outline = true;
@@ -68,11 +68,13 @@ export default function WorkflowViewer() {
             case 'WaitingApproval':
                 return 'bg-yellow-500';
             case 'Review':
+            case 'Editing':
                 return 'bg-purple-500';
-            case 'Completed':
+            case 'Final':
                 return 'bg-green-500';
             case 'Failed':
                 return 'bg-red-500';
+            case 'Idle':
             default:
                 return 'bg-gray-500';
         }
@@ -87,28 +89,16 @@ export default function WorkflowViewer() {
 
     const getOutlineStatus = () => {
         if (workflow.state === 'Outlining' || workflow.state === 'WaitingApproval') return 'active';
-        if (workflow.data.outline && ['Drafting', 'Review', 'Optimizing', 'Completed'].includes(workflow.state)) return 'completed';
+        if (workflow.data.outline && ['Drafting', 'Review', 'Editing', 'Optimizing', 'Final'].includes(workflow.state)) return 'completed';
         return 'pending';
     };
 
     const getDraftStatus = () => {
-        if (['Drafting', 'Review', 'Optimizing'].includes(workflow.state)) return 'active';
-        if (workflow.state === 'Completed') return 'completed';
+        if (['Drafting', 'Review', 'Editing', 'Optimizing'].includes(workflow.state)) return 'active';
+        if (workflow.state === 'Final') return 'completed';
         return 'pending';
     };
 
-    const getProgress = (state: string) => {
-        switch (state) {
-            case 'Researching': return 25;
-            case 'Outlining': return 50;
-            case 'WaitingApproval': return 50;
-            case 'Drafting': return 75;
-            case 'Review': return 85;
-            case 'Optimizing': return 95;
-            case 'Completed': return 100;
-            default: return 0;
-        }
-    };
 
     return (
         <div className="space-y-6">
@@ -116,16 +106,41 @@ export default function WorkflowViewer() {
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-semibold text-gray-800">Workflow Progress</h3>
                     <span className={`px-3 py-1 rounded-full text-white text-sm font-medium ${getStateColor(workflow.state)}`}>
-                        {workflow.state}
                     </span>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
-                    <div
-                        className={`h-2.5 rounded-full transition-all duration-500 ${getStateColor(workflow.state)}`}
-                        style={{ width: `${getProgress(workflow.state)}%` }}
-                    ></div>
+                {/* Progress Stages */}
+                <div className="flex gap-2 mb-6">
+                    {[
+                        { key: 'Idle', label: 'Start' },
+                        { key: 'Researching', label: 'Research' },
+                        { key: 'Outlining', label: 'Outline' },
+                        { key: 'WaitingApproval', label: 'Approval' },
+                        { key: 'Drafting', label: 'Draft' },
+                        { key: 'Editing', label: 'Edit' },
+                        { key: 'Optimizing', label: 'Optimize' },
+                        { key: 'Final', label: 'Final' },
+                    ].map((stage) => {
+                        const stageOrder = ['Idle', 'Researching', 'Outlining', 'WaitingApproval', 'Drafting', 'Editing', 'Optimizing', 'Final'];
+                        const currentIndex = stageOrder.indexOf(workflow.state);
+                        const stageIndex = stageOrder.indexOf(stage.key);
+
+                        const isCompleted = stageIndex < currentIndex;
+                        const isCurrent = stageIndex === currentIndex;
+
+                        const getStageColor = () => {
+                            if (isCompleted) return 'bg-green-500';
+                            if (isCurrent) return 'bg-blue-500';
+                            return 'bg-gray-300';
+                        };
+
+                        return (
+                            <div key={stage.key} className="flex-1">
+                                <div className={`h-2.5 rounded-full transition-all duration-500 ${getStageColor()}`}></div>
+                                <p className="text-xs text-center mt-1 text-gray-600">{stage.label}</p>
+                            </div>
+                        );
+                    })}
                 </div>
 
                 {/* Current Step & Error Display */}
@@ -142,7 +157,7 @@ export default function WorkflowViewer() {
 
             <div className="space-y-4">
                 {/* 1. Draft Section (Top Priority) */}
-                {(workflow.data.draft || ['Drafting', 'Review', 'Optimizing', 'Completed'].includes(workflow.state)) && (
+                {(workflow.data.draft || ['Drafting', 'Review', 'Editing', 'Optimizing', 'Final'].includes(workflow.state)) && (
                     <CollapsibleSection
                         title="Draft Generation"
                         status={getDraftStatus()}

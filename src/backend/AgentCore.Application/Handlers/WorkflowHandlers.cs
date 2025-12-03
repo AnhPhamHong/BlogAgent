@@ -2,6 +2,7 @@ using AgentCore.Application.Commands;
 using AgentCore.Application.DTOs;
 using AgentCore.Application.Queries;
 using AgentCore.Domain.Interfaces;
+using AgentCore.Domain.Enums;
 using MediatR;
 
 namespace AgentCore.Application.Handlers;
