@@ -48,6 +48,12 @@ export const blogAgentApi = createApi({
             providesTags: (_result, _error, id) => [{ type: 'Workflow', id }],
         }),
 
+        // Get all workflows
+        getWorkflows: builder.query<Workflow[], void>({
+            query: () => '/workflows',
+            providesTags: ['Workflow'],
+        }),
+
         // Approve outline
         approveOutline: builder.mutation<Workflow, ApproveOutlineRequest>({
             query: ({ workflowId, ...body }) => ({
@@ -103,6 +109,7 @@ export const {
     useGenerateTopicsMutation,
     useCreateWorkflowMutation,
     useGetWorkflowQuery,
+    useGetWorkflowsQuery,
     useApproveOutlineMutation,
     useRejectOutlineMutation,
     useReviseDraftMutation,

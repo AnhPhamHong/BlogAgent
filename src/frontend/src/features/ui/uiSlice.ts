@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface UIState {
-    currentView: 'dashboard' | 'chat' | 'settings';
+    currentView: 'dashboard' | 'generate' | 'chat' | 'settings';
     workflowStep: 'initial' | 'research' | 'outline' | 'draft' | 'review' | 'optimize' | 'complete';
     progress: number;
     estimatedTimeRemaining?: number;

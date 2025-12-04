@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from '@/components/layout/Layout';
 import Dashboard from '@/pages/Dashboard';
+import Generate from '@/pages/Generate';
 
 function App() {
     return (
@@ -31,6 +32,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<Layout />}>
                     <Route index element={<Dashboard />} />
+                    <Route path="generate" element={<Generate />} />
                     <Route path="chat" element={<div className="p-4">Chat View - Coming Soon</div>} />
                     <Route path="settings" element={<div className="p-4">Settings - Coming Soon</div>} />
                 </Route>

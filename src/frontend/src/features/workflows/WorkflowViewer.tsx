@@ -3,6 +3,7 @@ import { useAppSelector } from '@/app/hooks';
 import { useGetWorkflowQuery } from '@/services/api';
 import { useWorkflowSubscription } from '@/hooks/useWorkflowSubscription';
 import OutlineEditor from './OutlineEditor';
+import EditingView from './EditingView';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ReactMarkdown from 'react-markdown';
 import CollapsibleSection from '@/components/ui/CollapsibleSection';
@@ -106,6 +107,7 @@ export default function WorkflowViewer() {
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-semibold text-gray-800">Workflow Progress</h3>
                     <span className={`px-3 py-1 rounded-full text-white text-sm font-medium ${getStateColor(workflow.state)}`}>
+                        {workflow.state}
                     </span>
                 </div>
 
@@ -156,7 +158,22 @@ export default function WorkflowViewer() {
             </div>
 
             <div className="space-y-4">
-                {/* 1. Draft Section (Top Priority) */}
+                {/* 1. Editing Section */}
+                {['Editing', 'Optimizing', 'Final'].includes(workflow.state) && (
+                    <CollapsibleSection
+                        title="Content Editing"
+                        status={workflow.state === 'Editing' ? 'active' : 'completed'}
+                        isOpen={workflow.state === 'Editing'}
+                        onToggle={() => toggleSection('editing')}
+                    >
+                        <EditingView
+                            isEditing={workflow.state === 'Editing'}
+                            editedContent={workflow.state !== 'Editing' ? workflow.data.draft?.content : undefined}
+                        />
+                    </CollapsibleSection>
+                )}
+
+                {/* 2. Draft Section */}
                 {(workflow.data.draft || ['Drafting', 'Review', 'Editing', 'Optimizing', 'Final'].includes(workflow.state)) && (
                     <CollapsibleSection
                         title="Draft Generation"
@@ -199,7 +216,7 @@ export default function WorkflowViewer() {
                     </CollapsibleSection>
                 )}
 
-                {/* 2. Outline Section */}
+                {/* 3. Outline Section */}
                 {(workflow.data.outline || ['Outlining', 'WaitingApproval'].includes(workflow.state) || getOutlineStatus() === 'completed') && (
                     <CollapsibleSection
                         title="Outline"

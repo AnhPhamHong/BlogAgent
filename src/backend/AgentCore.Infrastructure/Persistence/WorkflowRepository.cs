@@ -19,6 +19,11 @@ public class WorkflowRepository : IWorkflowRepository
         return await _context.Workflows.FindAsync(id);
     }
 
+    public async Task<IEnumerable<Workflow>> GetAllAsync()
+    {
+        return await _context.Workflows.OrderByDescending(w => w.CreatedAt).ToListAsync();
+    }
+
     public async Task SaveAsync(Workflow workflow)
     {
         if (_context.Entry(workflow).State == EntityState.Detached)

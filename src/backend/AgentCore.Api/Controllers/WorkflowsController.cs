@@ -20,6 +20,25 @@ public class WorkflowsController : ControllerBase
     }
 
     /// <summary>
+    /// List all workflows
+    /// </summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<WorkflowDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<WorkflowDto>>> ListWorkflows()
+    {
+        try
+        {
+            var workflows = await _mediator.Send(new ListWorkflowsQuery());
+            return Ok(workflows);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing workflows");
+            return StatusCode(500, "An error occurred while listing workflows");
+        }
+    }
+
+    /// <summary>
     /// Start a new blog generation workflow
     /// </summary>
     [HttpPost]

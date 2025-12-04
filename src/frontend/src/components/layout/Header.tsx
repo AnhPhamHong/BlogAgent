@@ -6,6 +6,7 @@ export default function Header() {
 
     const navItems = [
         { path: '/', label: 'Dashboard', view: 'dashboard' },
+        { path: '/generate', label: 'Generate', view: 'generate' },
         { path: '/chat', label: 'Chat', view: 'chat' },
         { path: '/settings', label: 'Settings', view: 'settings' },
     ];
@@ -31,8 +32,8 @@ export default function Header() {
                                 key={item.path}
                                 to={item.path}
                                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${currentView === item.view
-                                        ? 'text-primary-600 bg-primary-50'
-                                        : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                                    ? 'text-primary-600 bg-primary-50'
+                                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
                                     }`}
                             >
                                 {item.label}

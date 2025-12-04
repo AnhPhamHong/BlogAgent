@@ -13,7 +13,7 @@ export type ToneType = 'professional' | 'casual' | 'witty' | 'persuasive';
 // Workflow related types
 export interface Workflow {
     id: string;
-    topicId: string;
+    topic: string;
     state: WorkflowState;
     currentStep: string; // Human readable status
     data: {

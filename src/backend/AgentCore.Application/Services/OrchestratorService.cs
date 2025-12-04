@@ -92,8 +92,8 @@ public class OrchestratorService : IOrchestratorService
 
                 case WorkflowState.Editing:
                     if (string.IsNullOrEmpty(workflow.DraftContent)) throw new InvalidOperationException("Draft content missing");
-                    var edited = await _mediator.Send(new EditContentCommand(workflow.DraftContent));
-                    workflow.SetDraft(edited); // Update draft with edited version
+                    var edited = await _mediator.Send(new EditContentCommand(workflow.DraftContent, workflow.Tone ?? "Professional"));
+                    workflow.SetDraft(edited.Content); // Extract content from EditedContent
                     workflow.TransitionTo(WorkflowState.Optimizing);
                     shouldContinue = true;
                     break;
@@ -157,6 +157,11 @@ public class OrchestratorService : IOrchestratorService
     public async Task<Workflow?> GetWorkflowAsync(Guid workflowId)
     {
         return await _repository.GetAsync(workflowId);
+    }
+
+    public async Task<IEnumerable<Workflow>> GetAllWorkflowsAsync()
+    {
+        return await _repository.GetAllAsync();
     }
 
     public async Task<bool> ApproveOutlineAsync(Guid workflowId, string? notes)
